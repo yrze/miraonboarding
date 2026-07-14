@@ -1,7 +1,7 @@
 # PRD: Mira Onboarding
 
 **Goal: maximize D1 retention** · Author: Maxim Sirotkin · v0.9 · July 14–15, 2026
-*(v0.2 internal grilling → v0.3 first-session benchmark → v0.4 second touches → v0.5 mini-app wizard audit → v0.6 team answers: 0 starting tokens, no mini-app, setup-drop hole confirmed → v0.7 second review round (CEO/CPO/analyst) → v0.8 live observations: recovery push exists but generic & button-less → **v0.9 prototype shipped + prototype review fixes: 60-token grant with paid re-roll, referral at the zero-balance moment, "briefs stay free" policy, push stop rule**)*
+*(v0.2 internal grilling → v0.3 first-session benchmark → v0.4 second touches → v0.5 mini-app wizard audit → v0.6 team answers: 0 starting tokens, no mini-app, setup-drop hole confirmed → v0.7 second review round (CEO/CPO/analyst) → v0.8 live observations: recovery push exists but generic & button-less → **v0.9 prototype shipped + prototype review fixes: 60-token grant with paid re-roll, referral at the zero-balance moment, "briefs stay free" policy, push stop rule, decliner re-touch at +24 h, mini-app entry surfaced as the upsell surface**)*
 
 **Clickable prototype:** https://yrze.github.io/miraonboarding/
 
@@ -105,7 +105,7 @@ Mira has a comeback channel ordinary apps don't: **the bot may message first** �
 - **Memory is visible and controllable**: only facts the user actually said; "say *forget it* and I'll delete".
 - **One CTA per message** (Duolingo discipline), ≤60 s to aha.
 - **Chips after every reply** (Alice/ChatGPT pattern): every first-session message ends with 2–3 contextual buttons — the next step is always one tap; effort is never mandatory.
-- **No mini-app** (team's input): onboarding lives entirely in chat; deep settings stay in the mini-app as an option. The name screen is gone (first_name exists).
+- **No mini-app in the flow** (team's input): onboarding lives entirely in chat — but the mini-app entry stays pinned next to the input field, and once the hook is set the user gets a soft, non-CTA pointer to it (the mini-app is where the Pro upsell lives). The name screen is gone (first_name exists).
 - **Source-aware**: an ad start-parameter routes straight into the matching track, skipping the picker.
 - **Push degrades by design, not by accident** (tiers — see D1 push).
 
@@ -123,7 +123,7 @@ flowchart TD
     E --> F["Step 3. Memory: facts from the user's words, visible, deletable"]
     F --> G["Step 4. Hook: tap = scheduled. City is an optional follow-up"]
     G -- Yes --> H["Step 5. Wrap-up: one hint"]
-    G -- "No thanks" --> H2["Wrap-up + channel. We never message first again"]
+    G -- "No thanks" --> H2["Wrap-up + channel → one re-touch at +24 h (active hour), then silence"]
     E0 --> F
     H --> I["Day 2: push by data tier, a single question-CTA"]
     H2 -.silence.-> J
@@ -145,9 +145,9 @@ Track composition is a hypothesis; validate against the pick statistics of the c
 
 **Step 3. Memory.** Along the dialog Mira saves 2–3 facts **from what the user actually said** and shows it: "📌 Saved: you follow TON. Say *forget it* and I'll delete." No facts invented out of thin air.
 
-**Step 4. Hook.** Buttons: `Yes, at 8:30` / `Another time` / `No thanks`. **A tap = the hook is scheduled, period** — no mandatory questions (the fix for hole §1.5). Right after the tap, one **optional** follow-up: "btw, what city are you in? I'll match time and weather." Silence cancels nothing: time runs on the TZ guess (/start hour + language), and with an unconfirmed TZ we send within a conservative window. `No thanks` is respected: we never message first again; the wrap-up offers the @miramedia_en channel (broadcast, zero COGS).
+**Step 4. Hook.** Buttons: `Yes, at 8:30` / `Another time` / `No thanks`. **A tap = the hook is scheduled, period** — no mandatory questions (the fix for hole §1.5). Right after the tap, one **optional** follow-up: "btw, what city are you in? I'll match time and weather." Silence cancels nothing: time runs on the TZ guess (/start hour + language), and with an unconfirmed TZ we send within a conservative window. `No thanks` is respected — with one deliberate exception: a **single re-touch at +24 h, timed to the hour the user was active yesterday** (a proven-online slot), value-first in the track's tone, with a one-tap "don't message me again" right on it. A second "no" = silence forever (that's what protects block rate). The wrap-up also offers the @miramedia_en channel (broadcast, zero COGS).
 
-**Step 5. Wrap-up.** Exactly one CTA (the track's next step). Token balance is shown only if >0; otherwise the line is "always free: chat, photo analysis, music, reminders".
+**Step 5. Wrap-up.** Exactly one CTA (the track's next step). Token balance is shown only if >0; otherwise the line is "always free: chat, photo analysis, music, reminders". A passive pointer (not a CTA) nudges the mini-app entry by the input — models, Pro and deeper settings live there.
 
 **Day 2 — the D1 push, tiered by data completeness:**
 
@@ -157,7 +157,7 @@ Track composition is a hypothesis; validate against the pick statistics of the c
 | B | TZ guessed + 1–2 facts | A short version built on known facts, no weather; ends with "change the time or topics in one word" |
 | C | Nothing but the track | **No fake brief** — one live question in the track's tone (for "Just talk" — the question of the day in the chosen style) |
 
-One CTA per push; the "feature of the day" appears only after the user replies, never inside the push. **Re-engagement at ~22 h goes only to users who dropped mid-flow without an explicit refusal** (explicit "No thanks" receives nothing). One message, concrete value from their session topic; no reply → silence. **Stop rule**: after 3 unanswered mornings the daily push auto-pauses (protects COGS and report rate); an explicit decliner may get a one-line contextual re-offer at their next organic visit — never a push.
+One CTA per push; the "feature of the day" appears only after the user replies, never inside the push. **Re-engagement, two lanes**: mid-flow droppers (no explicit refusal) get one ~22 h touch with concrete value from their session topic; explicit decliners get the single +24 h active-hour re-touch described in Step 4, with opt-out on the message. In both lanes: no reply / second "no" → silence. **Stop rule**: after 3 unanswered mornings the daily push auto-pauses (protects COGS and report rate).
 
 ### Edge cases
 - **Deep links** (`ask_…`, skill shares): fulfil the intent first, then steps 3–4 in a single message. Don't break the viral loops.
@@ -190,7 +190,7 @@ One CTA per push; the "feature of the day" appears only after the user replies, 
 | **Zombie-D1**: pushes inflate D1 without habit | D7 with margin, Push Reply Rate, push-holdout, `return_trigger` taxonomy |
 | **Irrelevant default push** (user left no data) → burned trigger | Tiers A/B/C: a data-less push never pretends to be a brief |
 | First impression on budget models kills the wow and the Pro story | First generation and first push on the top model |
-| Pushes → blocks | Opt-in only; "No thanks" = silence forever; stop rule; block tracking via `my_chat_member`, symmetric |
+| Pushes → blocks | Opt-in first; decliners get exactly one value-first re-touch with a one-tap opt-out, second "no" = silence forever; stop rule; block tracking via `my_chat_member`, symmetric |
 | Token COGS | One track, cap, cost per incremental D1 before rollout |
 | Onboarding blocks users with a ready intent | Free text always wins; start-parameter skips the picker |
 | Breaking deep-link funnels | A separate short branch |

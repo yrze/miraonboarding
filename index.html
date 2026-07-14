@@ -116,7 +116,13 @@
   #tierbar .tp button.act{background:var(--accent);border-color:var(--accent);color:#04121f}
 
   /* input */
-  .foot{background:var(--panel);display:flex;gap:8px;padding:9px 10px;border-top:1px solid rgba(0,0,0,.35)}
+  .foot{background:var(--panel);display:flex;gap:8px;padding:9px 10px;border-top:1px solid rgba(0,0,0,.35);align-items:center}
+  .foot .app{background:var(--pill);border:1px solid var(--border);border-radius:50%;width:38px;height:38px;color:var(--sub);font-size:16px;cursor:pointer;flex:none}
+  .foot .app:hover{color:var(--accent);border-color:var(--accent)}
+  .app.pulse{animation:pl 1.2s 3}
+  @keyframes pl{0%,100%{box-shadow:0 0 0 0 rgba(94,181,247,0)}50%{box-shadow:0 0 0 9px rgba(94,181,247,.22)}}
+  #appsheet{position:absolute;inset:0;background:rgba(5,10,16,.92);backdrop-filter:blur(4px);z-index:20;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto}
+  #appsheet.off{display:none}
   .foot input{
     flex:1;background:var(--chatbg);border:1px solid var(--border);border-radius:18px;
     color:var(--txt);padding:9px 14px;font-size:16px;outline:none;
@@ -175,7 +181,8 @@
       <li>Follow to the end — one-tap hook setup, optional follow-ups.</li>
       <li>Hit <b>"Skip to tomorrow"</b> — the D1 morning push arrives.</li>
       <li>Switch push tiers <b>A / B / C</b> — how the push honestly degrades with less data.</li>
-      <li>↺ in the header restarts — 4 tracks plus an opt-out branch.</li>
+      <li>↺ in the header restarts — 4 tracks plus a decliner branch (one-time +24 h re-touch at the user's active hour, with opt-out; a second "no" = silence).</li>
+      <li>▦ by the input opens the mini-app entry — onboarding never routes through it, but the upsell surface stays one tap away.</li>
     </ol>
 
     <h2>Assumptions (no data from the team yet)</h2>
@@ -212,7 +219,18 @@
     </div>
   </div>
 
+  <div id="appsheet" class="off">
+    <div class="lg">
+      <h1>Mira mini-app ▦</h1>
+      <div class="tag">Not wired in this prototype — kept as the product's upsell &amp; deep-settings surface</div>
+      <p>In production this is where <b>Discover</b> (Private Mode), <b>Skills</b>, <b>Pro plans &amp; top models</b>, <b>Wallet</b> and memory settings live.</p>
+      <p>Onboarding never routes through the mini-app (team's input) — but the entry stays one tap away next to the input, and once the hook is set the user gets a soft pointer here. This is where the Pro upsell happens.</p>
+      <button class="go" onclick="closeApp()">Back to chat →</button>
+    </div>
+  </div>
+
   <div class="foot">
+    <button class="app" id="appbtn" title="Mira mini-app" onclick="openApp()">▦</button>
     <input id="inp" placeholder="Message" autocomplete="off">
     <button class="snd" onclick="sendInput()">➤</button>
   </div>
@@ -326,9 +344,11 @@ async function askCity(){
   ],delay:700});
 }
 async function finalWork(){
+  const ep=S.epoch;
   await bot(`Last thing: whenever you like, send me 2–3 tasks for tomorrow (right here, as text) — I'll build the brief around them. Chatting with me is always free 💬`,{kb:[
     ['⏭ Skip to tomorrow, '+S.hookTime,()=>showPush()],
-  ],delay:800});
+  ],delay:800});if(ep!==S.epoch)return;
+  appHint();
 }
 
 /* ------------ track: content ------------ */
@@ -368,12 +388,14 @@ async function contentMemory(){
   ]});
 }
 async function finalContent(){
+  const ep=S.epoch;
   const line = S.balance<=0
     ? `Tokens at zero — invite a friend and you both get a bonus. Chatting with me is always free 💬`
     : `You still have ${S.balance} 🪙 — one more image on you. Chatting with me is always free 💬`;
   await bot(line,{kb:[
     ['⏭ Skip to tomorrow, 8:30',()=>showPush()],
-  ],delay:800});
+  ],delay:800});if(ep!==S.epoch)return;
+  appHint();
 }
 
 /* ------------ track: crypto ------------ */
@@ -398,9 +420,11 @@ async function coins(c){
   ]});
 }
 async function finalCrypto(){
+  const ep=S.epoch;
   await bot(`Smart. Add or drop coins anytime — just say it.`,{kb:[
     ['⏭ Skip to tomorrow, 8:30',()=>showPush()],
-  ],delay:800});
+  ],delay:800});if(ep!==S.epoch)return;
+  appHint();
 }
 
 /* ------------ track: talk ------------ */
@@ -427,9 +451,11 @@ Drop it in your stories or a group chat — if someone asks, I'll bring it to yo
   ]});
 }
 async function finalTalk(){
+  const ep=S.epoch;
   await bot(`Set ✅ Tomorrow: my question, your rules.`,{kb:[
     ['⏭ Skip to tomorrow, '+S.hookTime,()=>showPush()],
-  ],delay:700});
+  ],delay:700});if(ep!==S.epoch)return;
+  appHint();
 }
 
 /* ------------ free text path ------------ */
@@ -440,27 +466,51 @@ That's the point: you ask, I answer. No forced steps, ever ✅`,{delay:900});if(
   await memory(`Saved: what you asked about — I'll keep the context.`);if(ep!==S.epoch)return;
   await bot(`One thing before you go: want a 1-line morning note with the single question worth deciding each day?`,{kb:[
     ['⚡ Yes, at 8:30',()=>hookYes('8:30',async()=>{
-      await bot(`Done ✅ Chat with me is free, always 💬`,{kb:[['⏭ Skip to tomorrow, 8:30',()=>showPush()]],delay:600});
+      const ep2=S.epoch;
+      await bot(`Done ✅ Chatting with me is always free 💬`,{kb:[['⏭ Skip to tomorrow, 8:30',()=>showPush()]],delay:600});
+      if(ep2===S.epoch)appHint();
     })],
     ['No thanks',noHook],
   ]});
 }
 
-/* ------------ opt-out branch ------------ */
+/* ------------ decliner branch ------------ */
 async function noHook(){
-  S.hook=false;
-  await bot(`Got it — I won't message you first. If you change your mind, just say <i>“daily on”</i>.
+  const ep=S.epoch;S.hook=false;S.sessTime=now();
+  await bot(`Got it — no daily pushes. If you change your mind, just say <i>“daily on”</i>.
 Meanwhile: news &amp; tricks live in my channel → <span style="color:var(--accent)">@miramedia_en</span>`,{kb:[
-    ['⏭ Skip to tomorrow',()=>showSilence()],
-  ],delay:800});
+    ['⏭ Skip to tomorrow',()=>showOptOutPush()],
+  ],delay:800});if(ep!==S.epoch)return;
 }
-async function showSilence(){
-  const ep=S.epoch;divider('— Tomorrow —');
-  note(`🔕 Silence. An explicit “no” is respected — no re-engagement pushes.<br>(The one-time recovery message exists only for users who dropped off mid-flow <i>without</i> answering.)`);
-  await bot(`<i>(prototype)</i> That's the opt-out branch. Try another track?`,{kb:[
-    ['↺ Restart',()=>restart()],
-  ],delay:900});if(ep!==S.epoch)return;
+const OPTPUSH={
+  work:()=>`Morning, Max — one-time check-in: what's the single task that makes today easier?
+<i>Useful? Say “daily on”. Not your thing? One tap below — and I'm gone.</i>`,
+  content:()=>`Morning, Max — 3 free content ideas are ready whenever you want them.
+<i>“Daily on” — and they arrive every morning. Not your thing? One tap below.</i>`,
+  crypto:()=>`Morning, Max — ${S.coin||'TON'} moved ▲ 2.1% since yesterday.
+<i>Want this as a 3-line daily? “Daily on”. Not your thing? One tap below.</i>`,
+  talk:()=>`Morning, Max — one question, ${S.style||'my'} style: what's one thing everyone praises that you secretly find overrated?
+<i>(“daily on” makes this a ritual — or one tap below and I'm gone)</i>`,
+  free:()=>`Morning, Max — quick one: if today had one extra free hour, where would it go?
+<i>(“daily on” for the daily version — or one tap below and I'm gone)</i>`
+};
+async function showOptOutPush(){
+  const ep=S.epoch;S.phase='optpush';
+  divider(`— Tomorrow, ${S.sessTime||'20:00'} (your active hour) —`);
+  await bot((OPTPUSH[S.track]||OPTPUSH.free)(),{kb:[
+    ['⚡ Daily on',()=>optIn()],
+    ['🔕 Not for me',()=>optOut()],
+  ],delay:1100});if(ep!==S.epoch)return;
+  note(`one-time re-engagement: +24 h, at the hour the user was provably online yesterday. Explicit opt-out right on the message; a second “no” = silence forever`);
+}
+async function optIn(){
   S.phase='done';
+  await bot(`Done — daily at ${S.sessTime||'8:30'} ✅ <i>(a decliner just converted — this branch exists for exactly that)</i>`,{kb:[['↺ Restart',()=>restart()]],delay:700});
+}
+async function optOut(){
+  S.phase='done';
+  note(`🔕 Full silence from here on. The second “no” is final — that's what protects block rate.`);
+  await bot(`<i>(prototype)</i> End of the decliner branch. Try another track?`,{kb:[['↺ Restart',()=>restart()]],delay:700});
 }
 
 /* ------------ D1 push ------------ */
@@ -560,6 +610,7 @@ function sendInput(){
   userMsg(v);
   const low=v.toLowerCase();
   if(low.includes('forget')){bot(`Deleted ✅ <i>(memory is always user-controlled)</i>`,{delay:500});return;}
+  if(low.includes('daily on')){bot(`Done — daily at ${S.sessTime||'8:30'} ✅`,{delay:500});return;}
   if(S.phase==='pushed'){afterPush();return;}
   if(S.phase==='onboarding'&&!S.track){freePath(v);return;}
   if(S.phase==='onboarding'&&S.track==='content'&&!S.genDone){genImage('🎨',v);return;}
@@ -575,6 +626,12 @@ function restart(){
   chat.innerHTML='';document.getElementById('tierbar').classList.remove('on');
   Object.assign(S,{track:null,hook:false,hookTime:'8:30',city:null,coin:null,style:null,tier:'B',pushEl:null,phase:'onboarding',tasks:null,balance:0,genDone:false});
   start();
+}
+function openApp(){document.getElementById('appsheet').classList.remove('off');}
+function closeApp(){document.getElementById('appsheet').classList.add('off');}
+function appHint(){
+  note(`▦ Pro, top models and deeper settings live in the mini-app — button by the input field`);
+  const b=document.getElementById('appbtn');b.classList.remove('pulse');void b.offsetWidth;b.classList.add('pulse');
 }
 function openLegend(){document.getElementById('legend').classList.remove('off');}
 function closeLegend(){

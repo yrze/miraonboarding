@@ -16,6 +16,7 @@ Defaults instead of forms: every question is optional, the morning push arrives 
 2. Follow the flow to the end: one-tap hook setup, optional follow-ups.
 3. Hit **"Skip to tomorrow"** to see the D1 morning push.
 4. Switch push tiers **A / B / C** to see how it degrades with less data.
-5. ↺ restarts — there are 4 tracks plus an opt-out branch.
+5. ↺ restarts — 4 tracks plus a decliner branch (one-time +24 h re-touch at the user's active hour, opt-out on the message).
+6. ▦ by the input opens the mini-app entry — onboarding never routes through it, but the upsell surface stays one tap away.
 
 The in-app legend (ⓘ) covers current vs proposed flow and the assumptions made.
