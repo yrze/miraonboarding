@@ -1,0 +1,586 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mira — Onboarding Prototype (D1 Retention)</title>
+<style>
+  :root{
+    --bg:#0b141d; --panel:#17212b; --chatbg:#0e1621;
+    --in:#182533; --out:#2b5278; --txt:#f1f5f9; --sub:#8aa0b4;
+    --accent:#5eb5f7; --pill:#1c2a38; --border:rgba(255,255,255,.09);
+    --good:#7ee2a8;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%}
+  body{
+    background:#05090f; color:var(--txt);
+    font:15px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .phone{
+    width:min(430px,100vw); height:min(860px,100dvh);
+    background:var(--chatbg); display:flex; flex-direction:column;
+    border-radius:18px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,.6);
+    position:relative;
+  }
+  @media (max-width:460px){ .phone{border-radius:0; height:100dvh} body{align-items:stretch} }
+
+  /* header */
+  .hdr{
+    background:var(--panel); padding:10px 12px; display:flex; align-items:center; gap:10px;
+    border-bottom:1px solid rgba(0,0,0,.35); z-index:5;
+  }
+  .ava{
+    width:38px;height:38px;border-radius:50%;
+    background:radial-gradient(circle at 30% 25%,#a78bfa,#6d28d9 70%);
+    display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;
+  }
+  .hdr .who{flex:1;min-width:0}
+  .hdr .name{font-weight:600;display:flex;align-items:center;gap:5px}
+  .hdr .name .ok{color:var(--accent);font-size:13px}
+  .hdr .st{font-size:12.5px;color:var(--sub)}
+  .hbtn{
+    background:none;border:none;color:var(--sub);font-size:18px;cursor:pointer;
+    width:34px;height:34px;border-radius:50%;
+  }
+  .hbtn:hover{background:rgba(255,255,255,.06);color:var(--txt)}
+
+  /* chat */
+  #chat{flex:1;overflow-y:auto;padding:14px 10px 8px;display:flex;flex-direction:column;gap:6px;scroll-behavior:smooth}
+  .row{display:flex;flex-direction:column;align-items:flex-start;max-width:86%}
+  .row.user{align-self:flex-end;align-items:flex-end}
+  .bub{
+    background:var(--in);padding:8px 12px;border-radius:14px 14px 14px 4px;
+    white-space:pre-wrap;word-wrap:break-word;box-shadow:0 1px 1px rgba(0,0,0,.25);
+  }
+  .row.user .bub{background:var(--out);border-radius:14px 14px 4px 14px}
+  .time{font-size:11px;color:var(--sub);margin:3px 6px 0}
+  .kb{display:flex;flex-direction:column;gap:4px;margin-top:5px;width:100%}
+  .kb button{
+    background:rgba(94,181,247,.12);border:1px solid rgba(94,181,247,.25);color:var(--accent);
+    padding:9px 12px;border-radius:9px;font-size:14.5px;cursor:pointer;text-align:center;width:100%;
+    transition:background .15s;
+  }
+  .kb button:hover{background:rgba(94,181,247,.22)}
+  .kb button:disabled{opacity:.4;cursor:default}
+  .chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+  .chips button{
+    background:var(--pill);border:1px solid var(--border);color:var(--txt);
+    padding:7px 12px;border-radius:16px;font-size:13.5px;cursor:pointer;
+  }
+  .chips button:hover{border-color:var(--accent);color:var(--accent)}
+
+  .memory{
+    align-self:center;background:rgba(126,226,168,.08);border:1px solid rgba(126,226,168,.3);
+    color:var(--good);font-size:13px;padding:7px 12px;border-radius:10px;max-width:88%;text-align:center;
+  }
+  .note{align-self:center;color:var(--sub);font-size:12.5px;text-align:center;max-width:88%;padding:2px 8px;font-style:italic}
+  .divider{
+    align-self:center;background:rgba(255,255,255,.07);color:var(--sub);
+    font-size:12.5px;padding:5px 14px;border-radius:14px;margin:10px 0 4px;font-weight:600;letter-spacing:.3px;
+  }
+  .vnote{
+    width:170px;height:170px;border-radius:50%;align-self:flex-start;
+    background:radial-gradient(circle at 35% 30%,#b79bff,#5b21b6 75%);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+    box-shadow:0 2px 10px rgba(0,0,0,.4);position:relative;
+  }
+  .vnote .face{font-size:52px}
+  .vnote .play{position:absolute;bottom:12px;right:16px;background:rgba(0,0,0,.45);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:12px}
+  .vnote .len{position:absolute;bottom:14px;left:18px;font-size:11px;background:rgba(0,0,0,.45);padding:2px 7px;border-radius:9px}
+  .imggen{
+    width:230px;height:230px;border-radius:12px;
+    background:linear-gradient(135deg,#ff8bd2 0%,#7f5bff 45%,#20d6c7 100%);
+    display:flex;align-items:center;justify-content:center;font-size:74px;
+    box-shadow:0 2px 12px rgba(0,0,0,.4);
+  }
+  .cap{font-size:12px;color:var(--sub);margin-top:4px;max-width:230px}
+
+  .typing{display:flex;gap:4px;background:var(--in);padding:12px 14px;border-radius:14px 14px 14px 4px;width:56px}
+  .typing i{width:7px;height:7px;border-radius:50%;background:var(--sub);animation:tp 1.1s infinite}
+  .typing i:nth-child(2){animation-delay:.18s}.typing i:nth-child(3){animation-delay:.36s}
+  @keyframes tp{0%,60%,100%{opacity:.3;transform:translateY(0)}30%{opacity:1;transform:translateY(-3px)}}
+
+  /* tier bar */
+  #tierbar{
+    display:none;background:var(--panel);border-top:1px solid rgba(0,0,0,.35);
+    padding:7px 12px;font-size:12.5px;color:var(--sub);align-items:center;gap:8px;
+  }
+  #tierbar.on{display:flex}
+  #tierbar .tp{display:flex;gap:5px;margin-left:auto}
+  #tierbar .tp button{
+    background:var(--pill);border:1px solid var(--border);color:var(--txt);
+    width:30px;height:26px;border-radius:7px;cursor:pointer;font-weight:700;font-size:12.5px;
+  }
+  #tierbar .tp button.act{background:var(--accent);border-color:var(--accent);color:#04121f}
+
+  /* input */
+  .foot{background:var(--panel);display:flex;gap:8px;padding:9px 10px;border-top:1px solid rgba(0,0,0,.35)}
+  .foot input{
+    flex:1;background:var(--chatbg);border:1px solid var(--border);border-radius:18px;
+    color:var(--txt);padding:9px 14px;font-size:16px;outline:none;
+  }
+  .foot input:focus{border-color:rgba(94,181,247,.5)}
+  .foot .snd{
+    background:var(--accent);border:none;border-radius:50%;width:38px;height:38px;
+    color:#04121f;font-size:16px;cursor:pointer;flex:none;
+  }
+
+  /* legend overlay */
+  #legend{
+    position:absolute;inset:0;background:rgba(5,10,16,.92);backdrop-filter:blur(4px);
+    z-index:20;display:flex;align-items:center;justify-content:center;padding:16px;overflow-y:auto;
+  }
+  #legend.off{display:none}
+  .lg{
+    background:var(--panel);border:1px solid var(--border);border-radius:16px;
+    max-width:400px;width:100%;padding:22px 20px;font-size:13.5px;max-height:96%;overflow-y:auto;
+  }
+  .lg h1{font-size:17px;margin:0 0 4px}
+  .lg .tag{color:var(--sub);font-size:12.5px;margin-bottom:12px}
+  .lg h2{font-size:13px;margin:16px 0 6px;color:var(--accent);text-transform:uppercase;letter-spacing:.5px}
+  .lg p,.lg li{color:#cfdae4;margin:4px 0}
+  .lg ul,.lg ol{margin:4px 0;padding-left:18px}
+  .lg .vs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+  .lg .vs div{background:var(--chatbg);border:1px solid var(--border);border-radius:10px;padding:10px;font-size:12.5px}
+  .lg .vs b{display:block;margin-bottom:5px}
+  .lg .vs .bad b{color:#f2a3a3}.lg .vs .good b{color:var(--good)}
+  .lg .go{
+    width:100%;margin-top:18px;background:var(--accent);border:none;border-radius:10px;
+    padding:12px;font-size:15px;font-weight:600;color:#04121f;cursor:pointer;
+  }
+  .lg .fine{color:var(--sub);font-size:11.5px;margin-top:10px}
+</style>
+</head>
+<body>
+
+<div id="legend">
+  <div class="lg">
+    <h1>Mira Onboarding — Prototype</h1>
+    <div class="tag">PM test assignment · goal: maximize D1 retention · design is secondary — idea &amp; flow first</div>
+
+    <h2>The idea in one line</h2>
+    <p><b>Value in 60 seconds → visible memory → a next-day hook set in one tap.</b> Onboarding doesn't pitch features — it does something useful now and makes a deal about tomorrow.</p>
+
+    <h2>Production today vs this prototype</h2>
+    <div class="vs">
+      <div class="bad"><b>Production today</b>/start → 6-screen mini-app form (role, intent, name) → skill suggestions → setup via 3 open-ended questions. Zero value delivered in the first session. Abandon the setup → Daily never arrives; the recovery push is generic and, again, button-less.</div>
+      <div class="good"><b>This prototype</b>Value in the first 60 seconds (Mira acts first) → memory is visible and user-controlled → Daily set in one tap, every question optional → the morning push degrades honestly (tiers A/B/C), one CTA per message.</div>
+    </div>
+
+    <h2>How to review (~2 min)</h2>
+    <ol>
+      <li>Pick a track — or type anything: free text never gets blocked. That's a principle.</li>
+      <li>Follow to the end — one-tap hook setup, optional follow-ups.</li>
+      <li>Hit <b>"Skip to tomorrow"</b> — the D1 morning push arrives.</li>
+      <li>Switch push tiers <b>A / B / C</b> — how the push honestly degrades with less data.</li>
+      <li>↺ in the header restarts — 4 tracks plus an opt-out branch.</li>
+    </ol>
+
+    <h2>Assumptions (no data from the team yet)</h2>
+    <ul>
+      <li>60 🪙 welcome grant in the Content track: first image 30, optional re-roll 30 (new users currently get 0 — paywall shock instead of a wow). COGS cap ≈ two top-model images per Content newcomer.</li>
+      <li>First generation and the first push run on the top model — a Pro teaser at a fixed, tiny COGS. Daily text briefs stay free on a budget model.</li>
+      <li>Default push time 8:30; time zone estimated from the /start hour. Pushes auto-pause after 3 unanswered mornings (stop rule).</li>
+    </ul>
+
+    <button class="go" onclick="closeLegend()">Open the prototype →</button>
+    <div class="fine">Based on PRD v0.8: production onboarding audit, 5-competitor benchmark, live field tests, two internal review rounds. All data in the prototype is demo.</div>
+  </div>
+</div>
+
+<div class="phone">
+  <div class="hdr">
+    <div class="ava">M</div>
+    <div class="who">
+      <div class="name">Mira <span class="ok">✔</span></div>
+      <div class="st" id="status">bot</div>
+    </div>
+    <button class="hbtn" title="Legend" onclick="openLegend()">ⓘ</button>
+    <button class="hbtn" title="Restart" onclick="restart()">↺</button>
+  </div>
+
+  <div id="chat"></div>
+
+  <div id="tierbar">
+    <span>Push tier — how it degrades with less data</span>
+    <div class="tp">
+      <button id="tA" onclick="setTier('A')">A</button>
+      <button id="tB" onclick="setTier('B')">B</button>
+      <button id="tC" onclick="setTier('C')">C</button>
+    </div>
+  </div>
+
+  <div class="foot">
+    <input id="inp" placeholder="Message" autocomplete="off">
+    <button class="snd" onclick="sendInput()">➤</button>
+  </div>
+</div>
+
+<script>
+/* ------------ state ------------ */
+const S = {
+  track:null,      // work | content | crypto | talk | free
+  hook:false, hookTime:'8:30',
+  city:null, coins:null, style:null,
+  tier:'B', pushEl:null, phase:'onboarding', // onboarding | pushed | done
+  lastKb:null, epoch:0, tasks:null, coin:null, balance:0, genDone:false
+};
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const tomorrowStr=()=>new Date(Date.now()+864e5).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+const chat = document.getElementById('chat');
+const inp = document.getElementById('inp');
+
+function now(){const d=new Date();return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');}
+function scroll(){chat.scrollTop = chat.scrollHeight;}
+
+function userMsg(t){
+  const r=document.createElement('div');r.className='row user';
+  r.innerHTML=`<div class="bub"></div><div class="time">${now()}</div>`;
+  r.querySelector('.bub').textContent=t;chat.appendChild(r);scroll();
+}
+function typing(ms){const ep=S.epoch;return new Promise(res=>{
+  const t=document.createElement('div');t.className='row';t.innerHTML='<div class="typing"><i></i><i></i><i></i></div>';
+  chat.appendChild(t);scroll();
+  document.getElementById('status').textContent='typing…';
+  setTimeout(()=>{t.remove();document.getElementById('status').textContent='bot';res(ep===S.epoch);},ms);
+});}
+async function bot(t,{kb=null,chips=null,delay=700}={}){
+  if(!await typing(delay))return null;
+  const r=document.createElement('div');r.className='row';
+  const b=document.createElement('div');b.className='bub';b.innerHTML=t;r.appendChild(b);
+  if(kb){const k=document.createElement('div');k.className='kb';
+    kb.forEach(([label,fn])=>{const btn=document.createElement('button');btn.textContent=label;
+      btn.onclick=()=>{disableKb(k);userMsg(label.replace(/^[^\w]*\s?/,'').trim()||label);fn();};k.appendChild(btn);});
+    r.appendChild(k);S.lastKb={labels:kb};}
+  if(chips){const c=document.createElement('div');c.className='chips';
+    chips.forEach(([label,fn])=>{const btn=document.createElement('button');btn.textContent=label;
+      btn.onclick=()=>{disableKb(c);userMsg(label);fn();};c.appendChild(btn);});
+    r.appendChild(c);S.lastKb={labels:chips};}
+  const tm=document.createElement('div');tm.className='time';tm.textContent=now();r.appendChild(tm);
+  chat.appendChild(r);scroll();return b;
+}
+function disableKb(k){k.querySelectorAll('button').forEach(b=>b.disabled=true);}
+async function memory(t,{delay=500}={}){
+  if(!await typing(delay))return;
+  const m=document.createElement('div');m.className='memory';m.innerHTML='📌 '+t;chat.appendChild(m);scroll();
+}
+function note(t){const n=document.createElement('div');n.className='note';n.innerHTML=t;chat.appendChild(n);scroll();}
+function divider(t){const d=document.createElement('div');d.className='divider';d.textContent=t;chat.appendChild(d);scroll();}
+async function videoNote(){
+  if(!await typing(600))return;
+  const r=document.createElement('div');r.className='row';
+  r.innerHTML=`<div class="vnote"><div class="face">✨</div><div class="play">▶</div><div class="len">0:07</div></div>
+  <div class="cap">video note — kept from production (persona + implicit video-gen demo)</div><div class="time">${now()}</div>`;
+  chat.appendChild(r);scroll();
+}
+
+/* ------------ flow: start ------------ */
+async function start(){
+  const ep=S.epoch;S.phase='onboarding';
+  await videoNote();if(ep!==S.epoch)return;
+  await bot(`Hi Max 👋 I'm Mira — I don't just answer, I <b>get things done</b>: I remember what matters, connect to your apps, and follow up on my own.`,{delay:900});if(ep!==S.epoch)return;
+  await bot(`What's your world?`,{kb:[
+    ['💼 Work & tasks',trackWork],
+    ['🎨 Content',trackContent],
+    ['💎 Crypto',trackCrypto],
+    ['💬 Just talk',trackTalk],
+  ],delay:600});if(ep!==S.epoch)return;
+  note('…or just type anything — onboarding never blocks the chat');
+}
+
+/* ------------ track: work ------------ */
+async function trackWork(){
+  const ep=S.epoch;S.track='work';
+  await bot(`Watch this — your tomorrow morning, if I build it:`,{delay:800});if(ep!==S.epoch)return;
+  await bot(`☀️ <b>${tomorrowStr()}</b> — 24°C, clear
+📋 One thing worth deciding: which single task makes everything else easier?
+🕗 No meetings before 11:00 — deep-work window <i>(once Calendar is connected)</i>`,{delay:1200});if(ep!==S.epoch)return;
+  await bot(`Want a brief like this every morning — built around <i>your</i> tasks?`,{kb:[
+    ['⚡ Yes, at 8:30',()=>hookYes('8:30',askCity)],
+    ['🕘 Another time',pickTime],
+    ['No thanks',noHook],
+  ]});
+}
+async function pickTime(){
+  await bot(`Sure — when works?`,{kb:[
+    ['7:00',()=>hookYes('7:00',askCity)],
+    ['9:00',()=>hookYes('9:00',askCity)],
+    ['🌙 Evening, 21:00',()=>hookYes('21:00',askCity)],
+  ],delay:500});
+}
+async function hookYes(time,next){
+  const ep=S.epoch;S.hook=true;S.hookTime=time;
+  await bot(`Done — tomorrow at ${time} ✅`,{delay:500});if(ep!==S.epoch)return;
+  next();
+}
+async function askCity(){
+  await bot(`Btw, what city are you in? I'll match the time zone and weather. <i>(Optional — the brief arrives either way.)</i>`,{kb:[
+    ['📍 Lisbon',async()=>{S.city='Lisbon';S.tier='A';
+      await memory(`Saved: Lisbon (time zone &amp; weather). Say <i>“forget it”</i> and I'll delete.`);
+      finalWork();}],
+    ['Skip',async()=>{S.tier='B';
+      note(`no city → Mira estimates the time zone from your /start hour; you can tune it anytime`);
+      finalWork();}],
+  ],delay:700});
+}
+async function finalWork(){
+  await bot(`Last thing: whenever you like, send me 2–3 tasks for tomorrow (right here, as text) — I'll build the brief around them. Chatting with me is always free 💬`,{kb:[
+    ['⏭ Skip to tomorrow, '+S.hookTime,()=>showPush()],
+  ],delay:800});
+}
+
+/* ------------ track: content ------------ */
+async function trackContent(){
+  const ep=S.epoch;S.track='content';S.tier='A';S.balance=60;
+  await bot(`You've got <b>60 🪙 welcome tokens</b>. Your first image costs 30 — and I'll run it on our top model. Describe anything:`,{chips:[
+    ['😼 Neon cat astronaut',()=>genImage('😼','Neon cat astronaut')],
+    ['🌊 Vaporwave sunset',()=>genImage('🌇','Vaporwave sunset')],
+  ],delay:800});if(ep!==S.epoch)return;
+  note('…or type your own prompt');
+}
+async function genImage(emoji,prompt){
+  const ep=S.epoch;S.genPrompt=prompt;S.genDone=true;S.balance-=30;
+  if(!await typing(1600))return;
+  const r=document.createElement('div');r.className='row';
+  r.innerHTML=`<div class="imggen">${emoji}</div>
+  <div class="cap">Generated on the top model — this quality is what Pro feels like. <i>(demo placeholder)</i> · balance: ${S.balance} 🪙</div><div class="time">${now()}</div>`;
+  chat.appendChild(r);scroll();if(ep!==S.epoch)return;
+  await bot(`Not quite it? Re-roll for 30 🪙 — or we move on.`,{kb:[
+    ['🔄 Re-roll (−30 🪙)',async()=>{S.balance-=30;await genImageQuick(emoji);contentMemory();}],
+    ['😍 Love it',()=>contentMemory()],
+  ],delay:700});
+}
+async function genImageQuick(emoji){
+  if(!await typing(1400))return;
+  const r=document.createElement('div');r.className='row';
+  r.innerHTML=`<div class="imggen" style="filter:hue-rotate(120deg)">${emoji}</div>
+  <div class="cap">Re-roll · balance: ${S.balance} 🪙 <i>(demo)</i></div><div class="time">${now()}</div>`;
+  chat.appendChild(r);scroll();
+}
+async function contentMemory(){
+  const ep=S.epoch;
+  await memory(`Saved: you make content. Say <i>“forget it”</i> and I'll delete.`);if(ep!==S.epoch)return;
+  await bot(`Want <b>3 fresh content ideas</b> every morning? Text ideas are free, every day.`,{kb:[
+    ['⚡ Yes, at 8:30',()=>hookYes('8:30',finalContent)],
+    ['No thanks',noHook],
+  ]});
+}
+async function finalContent(){
+  const line = S.balance<=0
+    ? `Tokens at zero — invite a friend and you both get a bonus. Chatting with me is always free 💬`
+    : `You still have ${S.balance} 🪙 — one more image on you. Chatting with me is always free 💬`;
+  await bot(line,{kb:[
+    ['⏭ Skip to tomorrow, 8:30',()=>showPush()],
+  ],delay:800});
+}
+
+/* ------------ track: crypto ------------ */
+async function trackCrypto(){
+  S.track='crypto';
+  await bot(`Live prices, zero setup — no wallet needed. Which coins do you follow?`,{chips:[
+    ['TON',()=>coins('TON')],
+    ['BTC',()=>coins('BTC')],
+    ['ETH',()=>coins('ETH')],
+  ],delay:800});
+}
+async function coins(c){
+  const ep=S.epoch;S.coin=c;S.tier='A';
+  await bot(`<b>${c}</b> $6.42 ▲ 2.1% · 24h
+<b>market:</b> BTC $118,400 ▼ 0.3%
+<i>(demo data — live in production)</i>`,{delay:1000});if(ep!==S.epoch)return;
+  note('the wallet stays out of onboarding while it runs on testnet — prices only');
+  await memory(`Saved: you follow ${c}. Say <i>“forget it”</i> and I'll delete.`);if(ep!==S.epoch)return;
+  await bot(`The ${c} move is news-driven. Want a morning digest on ${c} — 3 lines, free?`,{kb:[
+    ['⚡ Yes, at 8:30',()=>hookYes('8:30',finalCrypto)],
+    ['No thanks',noHook],
+  ]});
+}
+async function finalCrypto(){
+  await bot(`Smart. Add or drop coins anytime — just say it.`,{kb:[
+    ['⏭ Skip to tomorrow, 8:30',()=>showPush()],
+  ],delay:800});
+}
+
+/* ------------ track: talk ------------ */
+async function trackTalk(){
+  S.track='talk';
+  await bot(`Pick how I talk to you:`,{chips:[
+    ['😊 Friendly',()=>style('Friendly')],
+    ['🤓 Nerd',()=>style('Nerd')],
+    ['😏 Cynic',()=>style('Cynic')],
+  ],delay:700});
+}
+async function style(st){
+  const ep=S.epoch;S.style=st;S.tier='A';
+  const lines={Friendly:`Deal! I'll keep it warm 🌷`,Nerd:`Excellent choice. Expect footnotes.`,Cynic:`Fine. I'll keep it dry.`};
+  await bot(lines[st],{delay:600});if(ep!==S.epoch)return;
+  await memory(`Saved: style — ${st}. Say <i>“forget it”</i> and I'll delete.`);if(ep!==S.epoch)return;
+  await bot(`Here's something fun: your personal <b>anonymous questions</b> link
+<span style="color:var(--accent)">t.me/mira?start=ask_max</span>
+Drop it in your stories or a group chat — if someone asks, I'll bring it to you in the morning.`,{delay:1000});if(ep!==S.epoch)return;
+  await bot(`And even if nobody asks — I'll have a <b>question of the day</b> for you. Morning or evening?`,{kb:[
+    ['☀️ Morning, 8:30',()=>hookYes('8:30',finalTalk)],
+    ['🌙 Evening, 21:00',()=>hookYes('21:00',finalTalk)],
+    ['No thanks',noHook],
+  ]});
+}
+async function finalTalk(){
+  await bot(`Set ✅ Tomorrow: my question, your rules.`,{kb:[
+    ['⏭ Skip to tomorrow, '+S.hookTime,()=>showPush()],
+  ],delay:700});
+}
+
+/* ------------ free text path ------------ */
+async function freePath(q){
+  const ep=S.epoch;S.track=S.track||'free';S.tier='B';
+  await bot(`<i>(scripted demo — in production I'd just answer this)</i>
+That's the point: you ask, I answer. No forced steps, ever ✅`,{delay:900});if(ep!==S.epoch)return;
+  await memory(`Saved: what you asked about — I'll keep the context.`);if(ep!==S.epoch)return;
+  await bot(`One thing before you go: want a 1-line morning note with the single question worth deciding each day?`,{kb:[
+    ['⚡ Yes, at 8:30',()=>hookYes('8:30',async()=>{
+      await bot(`Done ✅ Chat with me is free, always 💬`,{kb:[['⏭ Skip to tomorrow, 8:30',()=>showPush()]],delay:600});
+    })],
+    ['No thanks',noHook],
+  ]});
+}
+
+/* ------------ opt-out branch ------------ */
+async function noHook(){
+  S.hook=false;
+  await bot(`Got it — I won't message you first. If you change your mind, just say <i>“daily on”</i>.
+Meanwhile: news &amp; tricks live in my channel → <span style="color:var(--accent)">@miramedia_en</span>`,{kb:[
+    ['⏭ Skip to tomorrow',()=>showSilence()],
+  ],delay:800});
+}
+async function showSilence(){
+  const ep=S.epoch;divider('— Tomorrow —');
+  note(`🔕 Silence. An explicit “no” is respected — no re-engagement pushes.<br>(The one-time recovery message exists only for users who dropped off mid-flow <i>without</i> answering.)`);
+  await bot(`<i>(prototype)</i> That's the opt-out branch. Try another track?`,{kb:[
+    ['↺ Restart',()=>restart()],
+  ],delay:900});if(ep!==S.epoch)return;
+  S.phase='done';
+}
+
+/* ------------ D1 push ------------ */
+const PUSH = {
+  work:{
+    A:`Morning, Max ☀️ Lisbon: 24°C, clear.
+__TASK__
+What's the one thing that makes today easier?`,
+    B:`Morning, Max ☀️ Your brief is light for now — reply with your city and I'll add local time &amp; weather.
+Today's question: which single task makes everything else easier?`,
+    C:`Morning ☀️ Quick one: if today had one hour fewer meetings, what would you spend it on?
+<i>(reply — and I'll make it happen tomorrow)</i>`
+  },
+  content:{
+    A:`Morning, Max ✨ 3 content ideas for today:
+1. “I tested 5 AI bots so you don't have to”
+2. POV: your assistant remembers your deadlines
+3. Before/after: one photo, AI-edited
+Want me to draft any of them? Ideas are free, every day.`,
+    B:`Morning, Max ✨ Want today's 3 content ideas? Reply <b>go</b> — and name your niche to make them sharper.`,
+    C:`Morning ✨ One question: what's the last thing you made that you were proud of?
+<i>(reply — tomorrow's ideas will be about that)</i>`
+  },
+  crypto:{
+    A:`Morning, Max ☀️ Your watchlist:
+<b>__COIN__</b> $6.42 ▲ 2.1% · market: BTC $118,400 ▼ 0.3%
+__COIN__ pumped on listing news — want the 3-line why?`,
+    B:`Morning, Max ☀️ Markets are moving — tell me 1–3 coins you follow and tomorrow this becomes <i>your</i> digest.`,
+    C:`Morning ☀️ One question: long-term hold or day-to-day trades? <i>(reply — I'll shape your digest around it)</i>`
+  },
+  talk:{
+    A:`Morning, Max 🌞 No anonymous questions yet — so here's mine, Cynic edition:
+what's one thing everyone praises that you secretly find overrated?
+<i>(when your link gets clicks, real questions land here)</i>`,
+    B:`Morning, Max 🌞 Question of the day: what's one small thing that made yesterday better?`,
+    C:`Morning 🌞 One question: coffee first, or straight to chaos? <i>(reply — I'll remember your mornings)</i>`
+  },
+  free:{
+    A:`Morning, Max ☀️ Yesterday's topic — want me to dig one level deeper today?`,
+    B:`Morning, Max ☀️ The one question worth deciding today: what single task makes everything else easier?`,
+    C:`Morning ☀️ Quick one: if today had one extra free hour, what would you spend it on? <i>(reply — I'll make it happen tomorrow)</i>`
+  }
+};
+const QUICK = {
+  work:[['🔥 Lock the checklist'],["There's a bigger fire"]],
+  content:[['✍️ Draft idea #1'],['go']],
+  crypto:[['📈 Yes, the 3-line why'],['Add ETH too']],
+  talk:[['😏 Everything is overrated'],['Ask me tomorrow']],
+  free:[['That task, actually'],['An hour of nothing']]
+};
+const FEATURE = {
+  work:`On it 💪 One new trick a day, not ten: I can also watch your inbox and ping you <i>only</i> for the urgent stuff. Want a demo tomorrow?
+<i>Daily briefs stay free — Pro unlocks the top model for generations and deep answers.</i>`,
+  content:`Drafting ✍️ Btw — one new trick a day: I can schedule finished posts to auto-publish. Show you tomorrow?`,
+  crypto:`Here it comes 📈 Btw — one new trick a day: price alerts (“ping me if TON drops 5%”). Set one tomorrow?`,
+  talk:`Ha — noted 😏 Btw — one new trick a day: I can turn our chats into a private “things Max actually likes” list. Peek tomorrow?`,
+  free:`Nice 👌 Btw — one new trick a day: reminders in plain words (“remind me Friday to call mom”). Try one tomorrow?`
+};
+
+function renderPush(tr,t){
+  let s=PUSH[tr][t];
+  s=s.replace(/__COIN__/g,S.coin||'TON');
+  const task=S.tasks?`Top of your list: “${esc(S.tasks.length>60?S.tasks.slice(0,60)+'…':S.tasks)}”`:`No tasks from you yet — send 2–3 anytime, and tomorrow's brief builds around them.`;
+  return s.replace('__TASK__',task);
+}
+async function showPush(){
+  const ep=S.epoch;S.phase='pushed';
+  const label = S.hookTime==='21:00' ? '— Tomorrow, 21:00 🌙 —' : `— Tomorrow, ${S.hookTime} ☀️ —`;
+  divider(label);
+  document.getElementById('tierbar').classList.add('on');
+  markTier();
+  S.pushEl = await bot(renderPush(S.track,S.tier),{delay:1100});if(ep!==S.epoch)return;
+  note(`tier ${S.tier} — switch tiers below to see how the push degrades with less data`);
+  await bot(`<i>(prototype)</i> Reply to see day-2 progressive disclosure:`,{kb:
+    QUICK[S.track].map(([l])=>[l,()=>afterPush()]),delay:700});
+}
+async function afterPush(){
+  if(S.phase==='done')return;S.phase='done';
+  const ep=S.epoch;
+  await bot(FEATURE[S.track],{delay:900});if(ep!==S.epoch)return;
+  note(`🏁 End of flow. One CTA per message; next feature only after the user replies. ↺ to try another track.`);
+  await bot(`Try another track?`,{kb:[['↺ Restart',()=>restart()]],delay:600});
+}
+function markTier(){
+  ['A','B','C'].forEach(t=>document.getElementById('t'+t).classList.toggle('act',S.tier===t));
+}
+async function setTier(t){
+  if(!S.pushEl)return;
+  S.tier=t;markTier();
+  S.pushEl.style.opacity=.35;
+  setTimeout(()=>{S.pushEl.innerHTML=renderPush(S.track,t);S.pushEl.style.opacity=1;scroll();},250);
+}
+
+/* ------------ input ------------ */
+function sendInput(){
+  const v=inp.value.trim();if(!v)return;inp.value='';
+  userMsg(v);
+  const low=v.toLowerCase();
+  if(low.includes('forget')){bot(`Deleted ✅ <i>(memory is always user-controlled)</i>`,{delay:500});return;}
+  if(S.phase==='pushed'){afterPush();return;}
+  if(S.phase==='onboarding'&&!S.track){freePath(v);return;}
+  if(S.phase==='onboarding'&&S.track==='content'&&!S.genDone){genImage('🎨',v);return;}
+  if(S.phase==='onboarding'&&S.track==='work'){S.tasks=v;
+    bot(`Got it — <i>“${esc(v.length>60?v.slice(0,60)+'…':v)}”</i> goes into tomorrow's brief ✅`,{delay:600});return;}
+  bot(`<i>(prototype)</i> In production I'd answer this — free text always wins over the script. Here, tap the buttons to continue 😉`,{delay:600});
+}
+inp.addEventListener('keydown',e=>{if(e.key==='Enter')sendInput();});
+
+/* ------------ misc ------------ */
+function restart(){
+  S.epoch++;
+  chat.innerHTML='';document.getElementById('tierbar').classList.remove('on');
+  Object.assign(S,{track:null,hook:false,hookTime:'8:30',city:null,coin:null,style:null,tier:'B',pushEl:null,phase:'onboarding',tasks:null,balance:0,genDone:false});
+  start();
+}
+function openLegend(){document.getElementById('legend').classList.remove('off');}
+function closeLegend(){
+  document.getElementById('legend').classList.add('off');
+  if(!chat.childElementCount)start();
+}
+</script>
+</body>
+</html>
